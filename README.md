@@ -15,6 +15,12 @@ Simply include [afl-mutator.h](https://github.com/P1umer/AFLplusplus-protobuf-mu
 DEFINE_AFL_PROTO_FUZZER(const MessageType& input, unsigned char **out_buf){
     // transfer the input to some interesting DATA
     // and output the DATA to *out_buf
-    TransferMessageType(input, out_buf);
+    
+    /*
+     * @param[in] Protobuf Buffer containing the test case
+     * @param[out] out_buf Pointer to the buffer containing the test case after tranferance. 
+     * @return Size of the output buffer after processing or the needed amount.
+    */
+    TransferMessageType(input, out_buf); 
 }
 ```
