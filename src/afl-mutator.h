@@ -49,20 +49,20 @@
 #define DEFINE_AFL_CUSTOM_PROTO_POST_PROCESS_IMPL(use_binary, Proto)                 \
   extern "C" size_t afl_custom_post_process(                                         \
       void *data, unsigned char *buf, size_t buf_size, unsigned char **out_buf); {   \
-      Proto input;
-      // LoadProtoInput(use_binary, data, size, &input)
-      // ProtoToDataHelper(input, out_buf);                                          \
-      return A_CustomProtoPostProcess(use_binary, data, buf, buf_size,               \
-                                      out_buf, &input);                              \                      
+      using protobuf_mutator::libfuzzer::LoadProtoInput;                             \
+      Proto input;                                                                   \
+      if (LoadProtoInput(use_binary, buf, buf_size, &input))                            \
+        return ProtoToDataHelper(input);                                                    \
+      return 0;                                                                      \
       }
 
 #define DEFINE_AFL_PROTO_FUZZER_IMPL(use_binary, arg)                                 \
-  void ProtoToDataHelper(args)                                                         \
+  static size_t ProtoToDataHelper(args)                                                        \
   using FuzzerProtoType = std::remove_const<std::remove_reference<                    \
       std::function<decltype(ProtoToDataHelper)>::first_argument_type>::type>::type;  \
   DEFINE_AFL_CUSTOM_PROTO_MUTATOR_IMPL(use_binary, FuzzerProtoType)                   \
   DEFINE_AFL_CUSTOM_PROTO_POST_PROCESS_IMPL(use_binary, FuzzerProtoType)              \
-  void ProtoToDataHelper(args)
+  static size_t ProtoToDataHelper(args)
 
 namespace protobuf_mutator{
 namespace aflplusplus {
