@@ -34,51 +34,70 @@
 // significantly slower than mutator, so fuzzing rate may stay unchanged.
 #define DEFINE_AFL_BINARY_PROTO_FUZZER(args) DEFINE_AFL_PROTO_FUZZER_IMPL(true, args)
 
+
 // Implementation of macros above.
 #define DEFINE_AFL_CUSTOM_PROTO_MUTATOR_IMPL(use_binary, Proto)                    \
   extern "C" size_t afl_custom_fuzz(                                               \
-      void *data, unsigned char *buf, size_t buf_size, unsigned char **out_buf,    \
+      Seed *s, unsigned char *buf, size_t buf_size, unsigned char **out_buf,       \
       unsigned char *add_buf, size_t add_buf_size, size_t max_size); {             \
       Proto input1;                                                                \
       Proto input2;                                                                \
       return A_CustomProtoMutator(use_binary, data, buf, buf_size, out_buf,        \
-                                  add_buf, add_buf_size, max_size,                 \
+                                  add_buf, add_buf_size, max_size, s,              \
                                   &input1, &input2);                               \
       }
 
+#define DEFINE_AFL_CUSTOM_PROTO_INIT(use_binary, Proto)                   \
+  extern "c" Seed *afl_custom_init(void *afl, unsigned int s){            \
+      return &Seed(s);                                                    \
+  }
+
+// A post-processing function to use right before AFL++ writes the test case to
+// disk in order to execute the target.
 #define DEFINE_AFL_CUSTOM_PROTO_POST_PROCESS_IMPL(use_binary, Proto)                 \
   extern "C" size_t afl_custom_post_process(                                         \
-      void *data, unsigned char *buf, size_t buf_size, unsigned char **out_buf); {   \
+      Seed *s, unsigned char *buf, size_t buf_size, unsigned char **out_buf); {      \
       using protobuf_mutator::libfuzzer::LoadProtoInput;                             \
       Proto input;                                                                   \
-      if (LoadProtoInput(use_binary, buf, buf_size, &input))                            \
-        return ProtoToDataHelper(input);                                                    \
+      if (LoadProtoInput(use_binary, buf, buf_size, &input))                         \
+        return ProtoToDataHelper(input);                                             \
       return 0;                                                                      \
       }
 
 #define DEFINE_AFL_PROTO_FUZZER_IMPL(use_binary, arg)                                 \
-  static size_t ProtoToDataHelper(args)                                                        \
+  static size_t ProtoToDataHelper(args)                                               \
+  using protobuf_mutator::aflplusplus::Seed;                                          \
   using FuzzerProtoType = std::remove_const<std::remove_reference<                    \
       std::function<decltype(ProtoToDataHelper)>::first_argument_type>::type>::type;  \
   DEFINE_AFL_CUSTOM_PROTO_MUTATOR_IMPL(use_binary, FuzzerProtoType)                   \
   DEFINE_AFL_CUSTOM_PROTO_POST_PROCESS_IMPL(use_binary, FuzzerProtoType)              \
   static size_t ProtoToDataHelper(args)
 
+
 namespace protobuf_mutator{
 namespace aflplusplus {
+
+  class Seed {
+    public: 
+        size_t GetSeed();
+        Seed(size_t s);
+        
+    private:
+        size_t seed_;
+  };
 
   //Implementation of Crossover and Mutation of test cases in A(FL)_CustomProtoMutator.
   size_t A_CustomProtoMutator(bool binary, void *data, unsigned char *buf, size_t buf_size, 
                               unsigned char **out_buf, unsigned char *add_buf, 
-                              size_t add_buf_size, size_t max_size,
+                              size_t add_buf_size, size_t max_size, Seed *s,
                               protobuf::Message* input1,
                               protobuf::Message* input2);
 
-  // A post-processing function to use right before AFL++ writes the test case to
-  // disk in order to execute the target.
-  size_t A_CustomProtoPostProcess(bool binary, void *data, unsigned char *buf, 
-                                  size_t buf_size, unsigned char **out_buf,
-                                  protobuf::Message* input);
+  // // A post-processing function to use right before AFL++ writes the test case to
+  // // disk in order to execute the target.
+  // size_t A_CustomProtoPostProcess(bool binary, void *data, unsigned char *buf, 
+  //                                 size_t buf_size, unsigned char **out_buf,
+  //                                 protobuf::Message* input);
   
 
 } // namespace aflplusplus

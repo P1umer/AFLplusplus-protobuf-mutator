@@ -19,24 +19,29 @@
 namespace protobuf_mutator{
 namespace aflplusplus {
 namespace {
-
+    
 } //namespace
+
+    Seed::Seed(size_t s){
+        seed_ = s;
+    }
+
+    size_t Seed::GetSeed(){
+        return seed_;
+    }
 
     size_t A_CustomProtoMutator(bool binary, void *data, unsigned char *buf, size_t buf_size, 
                                 unsigned char **out_buf, unsigned char *add_buf, 
-                                size_t add_buf_size, size_t max_size,
+                                size_t add_buf_size, size_t max_size, Seed* s,
                                 protobuf::Message* input1,
                                 protobuf::Message* input2) {                   
         using libfuzzer::CustomProtoMutator;
         using libfuzzer::CustomProtoCrossOver; 
 
+        s->GetSeed();
+
         // (PC) probability of crossover : 0.8 (0.6~1.0)
         // (PM) probability of mutation  : 0.2 
-        
-
-
-        
-
 
     }
 
