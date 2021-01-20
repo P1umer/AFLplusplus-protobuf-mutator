@@ -16,6 +16,7 @@
 
 #include <stddef.h>
 
+#include <iostream>
 #include <cstdint>
 #include <functional>
 #include <type_traits>
@@ -36,37 +37,37 @@
 
 
 // Implementation of macros above.
-#define DEFINE_AFL_CUSTOM_PROTO_MUTATOR_IMPL(use_binary, Proto)                    \
-  extern "C" size_t afl_custom_fuzz(                                               \
-      Seed *s, unsigned char *buf, size_t buf_size, unsigned char **out_buf,       \
-      unsigned char *add_buf, size_t add_buf_size, size_t max_size); {             \
-      Proto input1;                                                                \
-      Proto input2;                                                                \
-      return A_CustomProtoMutator(use_binary, data, buf, buf_size, out_buf,        \
-                                  add_buf, add_buf_size, max_size, s,              \
-                                  &input1, &input2);                               \
+#define DEFINE_AFL_CUSTOM_PROTO_MUTATOR_IMPL(use_binary, Proto)                       \
+  extern "C" size_t afl_custom_fuzz(                                                  \
+      MutateHelper *m, unsigned char *buf, size_t buf_size, unsigned char **out_buf,  \
+      unsigned char *add_buf, size_t add_buf_size, size_t max_size); {                \
+      Proto input1;                                                                   \
+      Proto input2;                                                                   \
+      return A_CustomProtoMutator(m, use_binary, buf, buf_size, out_buf,              \
+                                  add_buf, add_buf_size, max_size,                    \
+                                  &input1, &input2);                                  \
       }
 
-#define DEFINE_AFL_CUSTOM_PROTO_INIT(use_binary, Proto)                   \
-  extern "c" Seed *afl_custom_init(void *afl, unsigned int s){            \
-      return &Seed(s);                                                    \
+#define DEFINE_AFL_CUSTOM_PROTO_INIT(use_binary, Proto)                           \
+  extern "c" MutateHelper *afl_custom_init(void *afl, unsigned int s){            \
+      return &MutateHelper(s);                                                    \
   }
 
 // A post-processing function to use right before AFL++ writes the test case to
 // disk in order to execute the target.
-#define DEFINE_AFL_CUSTOM_PROTO_POST_PROCESS_IMPL(use_binary, Proto)                 \
-  extern "C" size_t afl_custom_post_process(                                         \
-      Seed *s, unsigned char *buf, size_t buf_size, unsigned char **out_buf); {      \
-      using protobuf_mutator::libfuzzer::LoadProtoInput;                             \
-      Proto input;                                                                   \
-      if (LoadProtoInput(use_binary, buf, buf_size, &input))                         \
-        return ProtoToDataHelper(input);                                             \
-      return 0;                                                                      \
+#define DEFINE_AFL_CUSTOM_PROTO_POST_PROCESS_IMPL(use_binary, Proto)                        \
+  extern "C" size_t afl_custom_post_process(                                                \
+      MutateHelper *m, unsigned char *buf, size_t buf_size, unsigned char **out_buf); {     \
+      using protobuf_mutator::libfuzzer::LoadProtoInput;                                    \
+      Proto input;                                                                          \
+      if (LoadProtoInput(use_binary, buf, buf_size, &input))                                \
+        return ProtoToDataHelper(input);                                                    \
+      return 0;                                                                             \
       }
 
 #define DEFINE_AFL_PROTO_FUZZER_IMPL(use_binary, arg)                                 \
   static size_t ProtoToDataHelper(args)                                               \
-  using protobuf_mutator::aflplusplus::Seed;                                          \
+  using protobuf_mutator::aflplusplus::MutateHelper;                                  \
   using FuzzerProtoType = std::remove_const<std::remove_reference<                    \
       std::function<decltype(ProtoToDataHelper)>::first_argument_type>::type>::type;  \
   DEFINE_AFL_CUSTOM_PROTO_MUTATOR_IMPL(use_binary, FuzzerProtoType)                   \
@@ -77,28 +78,31 @@
 namespace protobuf_mutator{
 namespace aflplusplus {
 
-  class Seed {
+
+  // Embedding buf_ in class MutateHelper here to prevent memory 
+  // fragmentation caused by frequent memory allocation.
+  class MutateHelper {
     public: 
-        size_t GetSeed();
-        Seed(size_t s);
+        size_t GetSeed() const { return seed_; }
+        size_t GetLen() const { return len_; }
+        void SetLen(size_t len) { len_ = len; }
+        uint8_t* MutateHelper::GetOutBuf() { return buf_; }
+        uint8_t* MutateHelper::ReallocBuf(size_t len);
+        MutateHelper(size_t s);
+        ~MutateHelper() = default;
         
     private:
         size_t seed_;
+        uint8_t *buf_;
+        size_t len_;
   };
 
   //Implementation of Crossover and Mutation of test cases in A(FL)_CustomProtoMutator.
-  size_t A_CustomProtoMutator(bool binary, void *data, unsigned char *buf, size_t buf_size, 
+  size_t A_CustomProtoMutator(MutateHelper *m, bool binary, unsigned char *buf, size_t buf_size, 
                               unsigned char **out_buf, unsigned char *add_buf, 
-                              size_t add_buf_size, size_t max_size, Seed *s,
+                              size_t add_buf_size, size_t max_size, 
                               protobuf::Message* input1,
                               protobuf::Message* input2);
-
-  // // A post-processing function to use right before AFL++ writes the test case to
-  // // disk in order to execute the target.
-  // size_t A_CustomProtoPostProcess(bool binary, void *data, unsigned char *buf, 
-  //                                 size_t buf_size, unsigned char **out_buf,
-  //                                 protobuf::Message* input);
-  
 
 } // namespace aflplusplus
 } // namespace protobuf_mutator
