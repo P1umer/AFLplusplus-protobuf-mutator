@@ -58,20 +58,24 @@ namespace {
         switch (GetRandom(m->GetSeed())){
             case 1:
             case 2:{
-                // copy to m.buf_
+                // 1. Realloc m.buf_ to meet length requirements and copy buf to m.buf_.
+                //    In this case, We don’t need to allocate a separate outbuf for each
+                //    execution of afl_custom_fuzz() but only realloc buf_ in MutateHelper.
+                // 2. Mutate m.buf_ and store the length
                 memcpy(m->ReallocBuf(std::max(max_size, buf_size)), buf, buf_size);
-                m->SetLen(CustomProtoMutator(binary, buf, buf_size, max_size, 
+                m->SetLen(CustomProtoMutator(binary, m->GetOutBuf(), buf_size, max_size, 
                                              m->GetSeed(), input1));
                 break;
             }
             default:{
+                // Crossover buf and add_buf and store the outbuf to m.buf_
                 m->ReallocBuf(std::max(max_size, std::max(buf_size, add_buf_size)));
                 m->SetLen(CustomProtoCrossOver(binary, buf, buf_size, add_buf, add_buf_size, m->GetOutBuf(), 
                                                max_size,m->GetSeed(), input1, input2));
                 break;
             }
         }
-
+        
         *out_buf = m->GetOutBuf();
         return m->GetLen();
     }
@@ -79,7 +83,9 @@ namespace {
 } // aflplusplus
 } // protobuf_mutator
 
+#undef MAX_LENGTH(x, y)
 #undef INITIAL_SIZE
+
 
 
 
