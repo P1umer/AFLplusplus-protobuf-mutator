@@ -4,8 +4,22 @@ AFLplusplus + libprotobuf-mutator
 [AFLplusplus-protobuf-mutator](https://github.com/P1umer/AFLplusplus-protobuf-mutator) integrates [AFLplusplus](https://github.com/AFLplusplus/AFLplusplus) and [libprotobuf-mutator](https://github.com/google/libprotobuf-mutator).
 It could be used to feed the target on INTERESTING data based on protobuf.
 
-## Build
-TODO
+## Quick start
+### Download source code && update submodule
+```
+git clone https://github.com/P1umer/AFLplusplus-protobuf-mutator.git
+cd AFLplusplus-protobuf-mutator
+git submodule update
+```
+### Build
+First, build `/libprotobuf-mutator` according to instructions [here](https://github.com/google/libprotobuf-mutator#quick-start-on-debianubuntu).
+Then, use CMake to compile everything.
+```
+mkdir build
+cd build
+cmake ..
+make
+```
 
 ## Usage
 Simply include [afl-mutator.h](https://github.com/P1umer/AFLplusplus-protobuf-mutator/blob/main/src/afl-mutator.h).For example:

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "src/afl-mutator.h"
+#include "afl_mutator.h"
 
 #include <random>
 #include <algorithm>
@@ -83,7 +83,7 @@ namespace {
 } // aflplusplus
 } // protobuf_mutator
 
-#undef MAX_LENGTH(x, y)
+#undef MAX_LENGTH
 #undef INITIAL_SIZE
 
 

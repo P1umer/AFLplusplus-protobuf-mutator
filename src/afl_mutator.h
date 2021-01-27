@@ -1,18 +1,18 @@
 // Copyright 2021 P1umer
-//
+
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-//
+
 //     http://www.apache.org/licenses/LICENSE-2.0
-//
+
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AFLPLUSPLUS_PROTOBUF_MUTATOR_MUTATE_H_
-#define AFLPLUSPLUS_PROTOBUF_MUTATOR_MUTATE_H_
+#ifndef AFLPLUSPLUS_PROTOBUF_MUTATOR_SRC_AFL_MUTATE_H_
+#define AFLPLUSPLUS_PROTOBUF_MUTATOR_SRC_AFL_MUTATE_H_
 
 #include <stddef.h>
 
@@ -26,21 +26,21 @@
 
 // Defines custom mutator, crossover and test functions using default
 // serialization format. Default is text.
-#define DEFINE_AFL_PROTO_FUZZER(args) DEFINE_AFL_TEXT_PROTO_FUZZER(args)
+#define DEFINE_AFL_PROTO_FUZZER(args...) DEFINE_AFL_TEXT_PROTO_FUZZER(args)
 // Defines custom mutator, crossover and test functions using text
 // serialization. This format is more convenient to read.
-#define DEFINE_AFL_TEXT_PROTO_FUZZER(args) DEFINE_AFL_PROTO_FUZZER_IMPL(false, args)
+#define DEFINE_AFL_TEXT_PROTO_FUZZER(args...) DEFINE_AFL_PROTO_FUZZER_IMPL(false, args)
 // Defines custom mutator, crossover and test functions using binary
 // serialization. This makes mutations faster. However often test function is
 // significantly slower than mutator, so fuzzing rate may stay unchanged.
-#define DEFINE_AFL_BINARY_PROTO_FUZZER(args) DEFINE_AFL_PROTO_FUZZER_IMPL(true, args)
+#define DEFINE_AFL_BINARY_PROTO_FUZZER(args...) DEFINE_AFL_PROTO_FUZZER_IMPL(true, args)
 
 
 // Implementation of macros above.
 #define DEFINE_AFL_CUSTOM_PROTO_MUTATOR_IMPL(use_binary, Proto)                       \
   extern "C" size_t afl_custom_fuzz(                                                  \
       MutateHelper *m, unsigned char *buf, size_t buf_size, unsigned char **out_buf,  \
-      unsigned char *add_buf, size_t add_buf_size, size_t max_size); {                \
+      unsigned char *add_buf, size_t add_buf_size, size_t max_size) {                 \
       Proto input1;                                                                   \
       Proto input2;                                                                   \
       return A_CustomProtoMutator(m, use_binary, buf, buf_size, out_buf,              \
@@ -57,16 +57,16 @@
 // disk in order to execute the target.
 #define DEFINE_AFL_CUSTOM_PROTO_POST_PROCESS_IMPL(use_binary, Proto)                        \
   extern "C" size_t afl_custom_post_process(                                                \
-      MutateHelper *m, unsigned char *buf, size_t buf_size, unsigned char **out_buf); {     \
+      MutateHelper *m, unsigned char *buf, size_t buf_size, unsigned char **out_buf) {      \
       using protobuf_mutator::libfuzzer::LoadProtoInput;                                    \
       Proto input;                                                                          \
       if (LoadProtoInput(use_binary, buf, buf_size, &input))                                \
-        return ProtoToDataHelper(input);                                                    \
+        return ProtoToDataHelper(input, out_buf);                                           \
       return 0;                                                                             \
       }
 
-#define DEFINE_AFL_PROTO_FUZZER_IMPL(use_binary, arg)                                 \
-  static size_t ProtoToDataHelper(args)                                               \
+#define DEFINE_AFL_PROTO_FUZZER_IMPL(use_binary, args...)                             \
+  static size_t ProtoToDataHelper(args);                                              \
   using protobuf_mutator::aflplusplus::MutateHelper;                                  \
   using FuzzerProtoType = std::remove_const<std::remove_reference<                    \
       std::function<decltype(ProtoToDataHelper)>::first_argument_type>::type>::type;  \
@@ -86,8 +86,8 @@ namespace aflplusplus {
         size_t GetSeed() const { return seed_; }
         size_t GetLen() const { return len_; }
         void SetLen(size_t len) { len_ = len; }
-        uint8_t* MutateHelper::GetOutBuf() { return buf_; }
-        uint8_t* MutateHelper::ReallocBuf(size_t len);
+        uint8_t* GetOutBuf() { return buf_; }
+        uint8_t* ReallocBuf(size_t len);
         MutateHelper(size_t s);
         ~MutateHelper() = default;
         
@@ -108,4 +108,4 @@ namespace aflplusplus {
 } // namespace protobuf_mutator
 
 
-#endif // AFLPLUSPLUS_PROTOBUF_MUTATOR_MUTATE_H_
+#endif // AFLPLUSPLUS_PROTOBUF_MUTATOR_SRC_AFL_MUTATE_H_
