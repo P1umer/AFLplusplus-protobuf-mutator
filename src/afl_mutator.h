@@ -21,8 +21,8 @@
 #include <functional>
 #include <type_traits>
 
-#include "libprotobuf-mutator/port/protobuf.h"
-#include "libprotobuf-mutator/src/libfuzzer/libfuzzer_macro.h"
+#include "port/protobuf.h"
+#include "src/libfuzzer/libfuzzer_macro.h"
 
 // Defines custom mutator, crossover and test functions using default
 // serialization format. Default is text.

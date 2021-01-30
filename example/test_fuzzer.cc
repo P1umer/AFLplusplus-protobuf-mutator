@@ -14,7 +14,6 @@
 
 #include "test_fuzzer.h"
 
-
 namespace test_fuzzer {
 namespace {
 
@@ -47,6 +46,6 @@ DEFINE_AFL_PROTO_FUZZER(const Root& input, unsigned char **out_buf){
      * @param[out] out_buf Pointer to the buffer containing the test case after tranferance. 
      * @return Size of the output buffer after processing or the needed amount.
     */
-    GetMessageHandler()->TransferMessageType(input, out_buf); 
+    return GetMessageHandler()->TransferMessageType(input, out_buf); 
 }
 } // namespace test_fuzzer

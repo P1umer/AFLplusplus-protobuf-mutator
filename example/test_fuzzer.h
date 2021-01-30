@@ -14,7 +14,7 @@
 #ifndef AFLPLUSPLUS_PROTOBUF_MUTATOR_EXAMPLE_TEST_FUZZER_H_
 #define AFLPLUSPLUS_PROTOBUF_MUTATOR_EXAMPLE_TEST_FUZZER_H_
 
-#include "gen/test.pb.h"
+#include "example/test.pb.h"
 #include "src/afl_mutator.h"
 
 namespace test_fuzzer {
