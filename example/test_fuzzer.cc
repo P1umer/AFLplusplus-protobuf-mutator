@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <string>
 
 #include "test_fuzzer.h"
 
@@ -32,9 +33,21 @@ TestMessageHandler::~TestMessageHandler(){
 }
 
 size_t TestMessageHandler::TransferMessageType(const Root& input, unsigned char **out_buf){
-    //unsigned char* t="Test";
-    //*out_buf = t;
-    return 1;
+
+    switch(input->test()){
+        case 1:{
+                char* p1=new char[6];
+                strcpy(p1,"Hello");
+                *out_buf = (unsigned char *)p1;
+                return 6;
+        }
+        default: {
+                char* p2=new char[8];
+                strcpy(p2,"Overflow");
+                *out_buf = (unsigned char *)p2;
+                return 9;
+        }
+    }
 }
 
 DEFINE_AFL_PROTO_FUZZER(const Root& input, unsigned char **out_buf){

@@ -35,6 +35,18 @@
 // significantly slower than mutator, so fuzzing rate may stay unchanged.
 #define DEFINE_AFL_BINARY_PROTO_FUZZER(args...) DEFINE_AFL_PROTO_FUZZER_IMPL(true, args)
 
+// Initialize this custom mutator   
+#define DEFINE_AFL_CUSTOM_INIT                                          \
+  extern "C" MutateHelper *afl_custom_init(void *afl, unsigned int s){  \
+      MutateHelper *mutate_helper = new MutateHelper(s);                \
+      return mutate_helper;                                             \
+  } 
+
+// Deinitialize everything  
+#define DEFINE_AFL_CUSTOM_DEINIT                        \
+  extern "C" void afl_custom_deinit(MutateHelper *m){   \
+      delete m;                                         \
+  }
 
 // Implementation of macros above.
 #define DEFINE_AFL_CUSTOM_PROTO_MUTATOR_IMPL(use_binary, Proto)                       \
@@ -47,11 +59,6 @@
                                   add_buf, add_buf_size, max_size,                    \
                                   &input1, &input2);                                  \
       }
-
-#define DEFINE_AFL_CUSTOM_PROTO_INIT(use_binary, Proto)                           \
-  extern "c" MutateHelper *afl_custom_init(void *afl, unsigned int s){            \
-      return &MutateHelper(s);                                                    \
-  }
 
 // A post-processing function to use right before AFL++ writes the test case to
 // disk in order to execute the target.
@@ -72,7 +79,10 @@
       std::function<decltype(ProtoToDataHelper)>::first_argument_type>::type>::type;  \
   DEFINE_AFL_CUSTOM_PROTO_MUTATOR_IMPL(use_binary, FuzzerProtoType)                   \
   DEFINE_AFL_CUSTOM_PROTO_POST_PROCESS_IMPL(use_binary, FuzzerProtoType)              \
+  DEFINE_AFL_CUSTOM_INIT                                                              \
+  DEFINE_AFL_CUSTOM_DEINIT                                                            \
   static size_t ProtoToDataHelper(args)
+
 
 
 namespace protobuf_mutator{

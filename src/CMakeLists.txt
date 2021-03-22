@@ -14,5 +14,7 @@
 
 set(LIBAFLPM_SRC afl_mutator.cc)
 add_library(aflpm STATIC ${LIBAFLPM_SRC})
-add_dependencies(aflpm libprotobuf-mutator)
+if(LIB_PROTOBUF_MUTATOR_DOWNLOAD)
+    add_dependencies(aflpm libprotobuf-mutator)
+endif()
 target_link_libraries(aflpm libprotobuf-mutator::protobuf-mutator-libfuzzer)
