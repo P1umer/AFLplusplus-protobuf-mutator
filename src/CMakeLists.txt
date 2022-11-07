@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Fuzzer)
 set(LIBAFLPM_SRC afl_mutator.cc)
 add_library(aflpm STATIC ${LIBAFLPM_SRC})
 if(LIB_PROTOBUF_MUTATOR_DOWNLOAD)
-    add_dependencies(aflpm libprotobuf-mutator)
+    add_dependencies(aflpm libprotobuf-mutator Fuzzer)
 endif()
 target_link_libraries(aflpm libprotobuf-mutator::protobuf-mutator-libfuzzer)
+target_link_libraries(aflpm Fuzzer)

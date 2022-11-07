@@ -22,6 +22,13 @@
 #include <type_traits>
 
 #include "port/protobuf.h"
+#include "Fuzzer/FuzzerDefs.h"
+#include "Fuzzer/FuzzerRandom.h"
+#include "Fuzzer/FuzzerMutate.h"
+#include "Fuzzer/FuzzerInternal.h"
+#include "Fuzzer/FuzzerCorpus.h"
+#include "Fuzzer/FuzzerExtFunctions.h"
+
 #include "src/libfuzzer/libfuzzer_macro.h"
 
 // Defines custom mutator, crossover and test functions using default
@@ -36,10 +43,18 @@
 #define DEFINE_AFL_BINARY_PROTO_FUZZER(args...) DEFINE_AFL_PROTO_FUZZER_IMPL(true, args)
 
 // Initialize this custom mutator   
-#define DEFINE_AFL_CUSTOM_INIT                                          \
-  extern "C" MutateHelper *afl_custom_init(void *afl, unsigned int s){  \
-      MutateHelper *mutate_helper = new MutateHelper(s);                \
-      return mutate_helper;                                             \
+#define DEFINE_AFL_CUSTOM_INIT                                             \
+  extern "C" MutateHelper *afl_custom_init(void *afl, unsigned int s){     \
+      using namespace fuzzer;                                              \
+      MutateHelper *mutate_helper = new MutateHelper(s);                   \
+      auto seed = Random(s);                                               \
+      FuzzingOptions Options;                                              \
+      std::unique_ptr<ExternalFunctions> t(new ExternalFunctions());       \
+      EF = t.get();                                                        \
+      auto *MD = new MutationDispatcher(seed, Options);                    \
+      static auto *Corpus = new InputCorpus("");                           \
+      auto *F = new Fuzzer((UserCallback)nullptr, *Corpus, *MD, Options);  \
+      return mutate_helper;                                                \
   } 
 
 // Deinitialize everything  
