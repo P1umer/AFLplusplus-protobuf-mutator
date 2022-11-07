@@ -34,18 +34,22 @@ TestMessageHandler::~TestMessageHandler(){
 
 size_t TestMessageHandler::TransferMessageType(const Root& input, unsigned char **out_buf){
 
-    switch(input->test()){
-        case 1:{
+    switch(input.test()){
+        case 123:{
                 char* p1=new char[6];
-                strcpy(p1,"Hello");
+                strcpy(p1,"Hell1");
                 *out_buf = (unsigned char *)p1;
-                return 6;
+                //std::cout << "out:" << *out_buf << "\n"; // print the output, but did not change as expected
+       
+                return 4;
         }
         default: {
-                char* p2=new char[8];
-                strcpy(p2,"Overflow");
+                char* p2=new char[81];
+                strcpy(p2,"Overflowwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww");
                 *out_buf = (unsigned char *)p2;
-                return 9;
+                //std::cout << "out:" << *out_buf << "\n"; // print the output, but did not change as expected
+       
+                return 81;
         }
     }
 }
@@ -62,3 +66,4 @@ DEFINE_AFL_PROTO_FUZZER(const Root& input, unsigned char **out_buf){
     return GetMessageHandler()->TransferMessageType(input, out_buf); 
 }
 } // namespace test_fuzzer
+
